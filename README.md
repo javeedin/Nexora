@@ -3,7 +3,7 @@
 **The operations cloud for Oracle Fusion customers** — warehouse execution, Fusion data tools, data pipelines and
 governed AI agents in one multi-tenant subscription.
 
-- Requirements: [`docs/rd/`](docs/rd/README.md) · Decisions: [`docs/adr/`](docs/adr/) · Working rules: [`CLAUDE.md`](CLAUDE.md)
+- Requirements: [`docs/rd/`](docs/rd/README.md) · Plan & progress: [`docs/plan/`](docs/plan/PROGRESS.md) · Decisions: [`docs/adr/`](docs/adr/) · Working rules: [`CLAUDE.md`](CLAUDE.md)
 - Legacy reference: branch **`legacy/v12`** (the desktop system this product grows from — read-only)
 
 | Path | What |

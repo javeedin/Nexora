@@ -22,5 +22,7 @@
 | 95 | [Migration and roadmap](95-migration-and-roadmap.md) |
 | 99 | [Glossary](99-glossary.md) |
 
+Plan and progress (tasks per phase, status of every requirement): [`docs/plan/`](../plan/README.md).
+
 Requirement IDs (e.g. `WM-11`, `SQL-08`, `AG-11`) are stable: reference them in issues, commits, tests and PRs.
 Status of this document: **v0.1 draft**, derived from the legacy code on `legacy/v12` (Gray's WMS v12.0.0).

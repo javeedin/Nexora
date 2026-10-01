@@ -1,5 +1,7 @@
 # 95. Migration and roadmap
 
+> Detailed, ordered tasks per phase and live status: [`docs/plan/`](../plan/README.md) · [`PROGRESS.md`](../plan/PROGRESS.md).
+
 Strategy: **build the platform, then move modules one by one; the legacy desktop app keeps running for the pilot tenant
 until each module is live in Nexora** (strangler). Gray's = tenant #1 (pilot), data migrated per module.
 
