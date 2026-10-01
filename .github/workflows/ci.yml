@@ -43,7 +43,7 @@ jobs:
           cache: true
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 9.0.x # ADR 0003 — test on the runtime we ship
+          global-json-file: global.json # ADR 0009 — .NET 10 LTS, same SDK line as dev boxes
           cache: true
           cache-dependency-path: '**/packages.lock.json'
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0

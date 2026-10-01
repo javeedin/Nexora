@@ -40,7 +40,7 @@ system (Gray's WMS v12) kept on the read-only branch **`legacy/v12`**.
 9. Commit messages: Conventional Commits, reference requirement IDs (e.g. `feat(wms): ship confirm workflow (WM-11)`).
 
 ## Stack (see ADRs)
-React 19 + TS + Vite + TanStack + Tailwind/shadcn · .NET 9 modular monolith · Oracle 23ai + Liquibase · Temporal ·
+React 19 + TS + Vite + TanStack + Tailwind/shadcn · .NET 10 (LTS) modular monolith · Oracle 23ai + Liquibase · Temporal ·
 Kafka · Python 3.12 AI platform (FastAPI, LangGraph, LangChain-core, MLflow) · Vault · OpenTelemetry · GitHub Actions ·
 Docker / Kubernetes (OKE) / Terraform.
 

@@ -11,7 +11,7 @@ governed AI agents in one multi-tenant subscription.
 | `apps/web` | React + TypeScript web app |
 | `apps/picker-pwa` | Picker / driver PWA |
 | `apps/print-agent` | Nexora Edge (on-prem agent) |
-| `services/api` | .NET 9 core platform + modules |
+| `services/api` | .NET 10 core platform + modules |
 | `services/fusion-connector` | Oracle Fusion connector |
 | `services/workflows` | Temporal workers |
 | `services/ai-platform` | Python AI platform (gateway, agents, evals, ML) |
@@ -21,7 +21,7 @@ governed AI agents in one multi-tenant subscription.
 
 ## Getting started
 
-Prerequisites: Node 22 (`.nvmrc`) with pnpm 10 (`corepack enable`), .NET SDK 9+ (`global.json` rolls forward), [uv](https://docs.astral.sh/uv/) (installs Python 3.12 itself).
+Prerequisites: Node 22 (`.nvmrc`) with pnpm 10 (`corepack enable`), .NET SDK 10 (`global.json`), [uv](https://docs.astral.sh/uv/) (installs Python 3.12 itself).
 
 ```sh
 pnpm install          # TS workspaces + tooling

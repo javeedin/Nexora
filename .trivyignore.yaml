@@ -3,6 +3,6 @@
 vulnerabilities:
   - id: CVE-2026-84782
     statement: >-
-      OpenSSL DTLS info disclosure in the aspnet:9.0-noble-chiseled base image; fixed in Ubuntu 3.0.13-0ubuntu3.16 but
+      OpenSSL DTLS info disclosure in the aspnet:10.0-noble-chiseled base image; fixed in Ubuntu 3.0.13-0ubuntu3.16 but
       no rebuilt MCR image yet (2026-10-01). Nexora uses TLS, not DTLS. Remove when the base digest is bumped.
     expired_at: 2026-10-31

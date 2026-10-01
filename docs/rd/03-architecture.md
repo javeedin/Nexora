@@ -8,7 +8,7 @@
                                                                  ▼       ▼
                          API gateway / BFF  — authn, tenant resolution, entitlements, rate limits, audit
                                                                  │
-   ┌──────────────── Core platform (.NET 9 modular monolith → split when needed) ───────────────────────┐
+   ┌──────────────── Core platform (.NET 10 modular monolith → split when needed) ───────────────────────┐
    │ Tenancy · Identity/RBAC · Entitlements · Settings · Audit · Notifications · Files · Packs registry  │
    │ Modules: WMS · SQL · Load · Orders · SCM Workbench · Pipelines (control) · Analytics (API) · Agents │
    └──────┬─────────────────────┬───────────────────────┬──────────────────────┬────────────────────────┘
@@ -28,7 +28,7 @@
 | Web front end | React 19 + TypeScript, Vite, TanStack Router + Query, Tailwind + shadcn/ui, AG Grid (heavy grids), Monaco (SQL editor), ECharts / Chart.js, i18next | One design system in `packages/ui`, Storybook |
 | Mobile | PWA (offline queue, camera scanning) first; React Native only if hardware scanners need it | Pickers, drivers |
 | Desktop presence | None required; **Nexora Edge** (Go or .NET worker service) for local devices | Replaces the WinForms + WebView2 host |
-| Core backend | .NET 9, ASP.NET Core minimal APIs, modular monolith (one module = one folder + own schema), MediatR, FluentValidation, EF Core + Dapper, Polly | OpenAPI → generated TS client (`packages/api-client`) |
+| Core backend | .NET 10 (LTS, ADR 0009), ASP.NET Core minimal APIs, modular monolith (one module = one folder + own schema), MediatR, FluentValidation, EF Core + Dapper, Polly | OpenAPI → generated TS client (`packages/api-client`) |
 | Workflows | **Temporal** (.NET + Python SDKs) | Print trip, MRA batch, FBDI import, provisioning, approvals (signals), agent long waits |
 | Events | Kafka (OCI Streaming / MSK / Event Hubs), transactional outbox | Order / trip / print / pipeline events |
 | Fusion connector | .NET service: REST (resource index + describe), BIP SOAP runner (DBMS_XMLGEN report), ERP Integration (importBulkData, ESS), UCM, BICC; credentials from Vault per tenant + pod | Read-only by default; write scopes explicit |
