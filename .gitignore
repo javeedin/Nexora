@@ -16,3 +16,10 @@ __pycache__/
 coverage/
 .terraform/
 *.tfstate*
+
+# tooling
+.turbo/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+TestResults/

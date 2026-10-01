@@ -1,0 +1,28 @@
+{
+  "name": "nexora",
+  "private": true,
+  "description": "Nexora monorepo — TS, .NET and Python workspaces orchestrated by Turborepo",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint && pnpm run lint:root",
+    "lint:root": "eslint . && prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "affected": "turbo run build test lint --affected",
+    "hooks:install": "uvx pre-commit@4.6.2 install --install-hooks --hook-type pre-commit --hook-type commit-msg",
+    "commitlint": "commitlint"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@nexora/config": "workspace:*",
+    "eslint": "10.11.0",
+    "prettier": "3.9.9",
+    "turbo": "2.11.6",
+    "typescript": "6.0.3"
+  }
+}

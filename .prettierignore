@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+**/bin/
+**/obj/
+**/.venv/
+**/dist/
+**/coverage/
+.turbo/
+docs/
+*.md

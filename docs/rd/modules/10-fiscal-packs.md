@@ -17,7 +17,7 @@ TIMEOUT (sent, may exist — check before retry); per-step timings; circuit brea
 | FP-05 | Build invoice: STD; CRN for returns (+ reference); PRF pro-forma; currency, person type VATR, TAN / BRN / customer category; seller block and tax-code mapping (legacy 6004 → TC01, 23006 → TC03; 'SGG' service rule) **as pack config** |
 | FP-06 | Submit to the gateway with 60 s limit; success only with IRN; TIMEOUT vs UNREACHABLE distinction |
 | FP-07 | Write IRN back to the Fusion order header EFF (legacy `HeaderEffBGRAYSprivateVO.HoldReleasedBy` → configurable context / attribute) |
-| FP-08 | On / off per pod with mandatory reason and change log; flag shown on trips | 
+| FP-08 | On / off per pod with mandatory reason and change log; flag shown on trips |
 | FP-09 | Batch submission (trip, selection, AI action) with live status and retry |
 | FP-10 | Gateway over HTTPS only (legacy `http://mra.busi.in/MRAInvoice.php` — require TLS proxy or vendor HTTPS) |
 

@@ -19,4 +19,21 @@ governed AI agents in one multi-tenant subscription.
 | `db/migrations` | Liquibase changelogs |
 | `infra/*` | Terraform, Kubernetes, local compose stack |
 
+## Getting started
+
+Prerequisites: Node 22 (`.nvmrc`) with pnpm 10 (`corepack enable`), .NET SDK 9+ (`global.json` rolls forward), [uv](https://docs.astral.sh/uv/) (installs Python 3.12 itself).
+
+```sh
+pnpm install          # TS workspaces + tooling
+pnpm hooks:install    # pre-commit + commit-msg hooks (format, lint, secrets, Conventional Commits + requirement IDs)
+pnpm build            # every workspace: TS, services/api (dotnet build), services/ai-platform (uv sync)
+pnpm test             # node --test, dotnet test, pytest
+pnpm lint             # ESLint, Prettier, dotnet format, Ruff
+pnpm typecheck        # tsc, mypy --strict
+pnpm affected         # build + test + lint only what changed vs main (used by CI)
+```
+
+Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
+Commit messages: `feat(wms): ship confirm workflow (WM-11)` — `feat` / `fix` / `perf` / `refactor` must cite a requirement or plan task ID.
+
 Status: phase 0 (foundation) — see [roadmap](docs/rd/95-migration-and-roadmap.md).

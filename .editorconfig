@@ -12,3 +12,26 @@ indent_size = 4
 indent_size = 4
 [*.md]
 trim_trailing_whitespace = false
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.cs]
+# Style is enforced in build (EnforceCodeStyleInBuild); severities below are what CI fails on.
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = when_multiline:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+dotnet_style_readonly_field = true:warning
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0161.severity = warning
+dotnet_diagnostic.CA2007.severity = none
+
+[**/tests/**/*.cs]
+# Test names read as sentences: Tenant_B_cannot_read_tenant_A_rows
+dotnet_diagnostic.CA1707.severity = none

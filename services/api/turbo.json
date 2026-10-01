@@ -1,0 +1,15 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "cache": false
+    },
+    "test": {
+      "inputs": ["**/*.cs", "**/*.csproj", "**/*.json", "$TURBO_ROOT$/Directory.*.props", "$TURBO_ROOT$/global.json"]
+    },
+    "lint": {
+      "inputs": ["**/*.cs", "**/*.csproj", "$TURBO_ROOT$/.editorconfig"]
+    }
+  }
+}

@@ -61,5 +61,5 @@ The full scope is written down: 163 requirements (`docs/rd/modules/`) mapped to 
    anything half-finished and where).
 
 ## Current phase
-**Phase 0 — Foundation** — next task **P0-T01** (see `docs/plan/phase-0-foundation.md`). Keep this line in sync with
+**Phase 0 — Foundation** — next task **P0-T02** (see `docs/plan/phase-0-foundation.md`). Keep this line in sync with
 `PROGRESS.md`.

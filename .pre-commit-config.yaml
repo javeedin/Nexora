@@ -1,0 +1,95 @@
+# Install once:  pnpm hooks:install   (needs uv; runs `pre-commit install` for pre-commit + commit-msg)
+# Run on all files:  uvx pre-commit run --all-files
+# Every hook is local and pinned: Python tools from PyPI, TS / .NET tools from the workspace — same versions as CI.
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+exclude: ^(pnpm-lock\.yaml|.*/packages\.lock\.json|services/ai-platform/uv\.lock)$
+
+repos:
+  - repo: local
+    hooks:
+      # --- hygiene -------------------------------------------------------------------------------
+      - id: trailing-whitespace
+        name: trailing whitespace
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: trailing-whitespace-fixer
+        args: [--markdown-linebreak-ext=md]
+        types: [text]
+      - id: end-of-file-fixer
+        name: end of file
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: end-of-file-fixer
+        types: [text]
+      - id: check-yaml
+        name: check yaml
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: check-yaml
+        types: [yaml]
+      - id: check-json
+        name: check json
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: check-json
+        types: [json]
+      - id: check-merge-conflict
+        name: merge conflict markers
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: check-merge-conflict
+        types: [text]
+      - id: check-added-large-files
+        name: large files
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+        name: private keys (rule 3 — secrets only in Vault)
+        language: python
+        additional_dependencies: [pre-commit-hooks==6.0.0]
+        entry: detect-private-key
+        types: [text]
+
+      # --- TypeScript / JS ------------------------------------------------------------------------
+      - id: prettier
+        name: prettier
+        language: system
+        entry: pnpm exec prettier --write --ignore-unknown
+        types_or: [javascript, jsx, ts, tsx, json, yaml, css]
+      - id: eslint
+        name: eslint
+        language: system
+        entry: pnpm exec eslint --max-warnings=0
+        types_or: [javascript, jsx, ts, tsx]
+
+      # --- .NET -----------------------------------------------------------------------------------
+      - id: dotnet-format
+        name: dotnet format (services/api)
+        language: system
+        entry: bash -c 'dotnet format services/api/Nexora.sln --verify-no-changes --include "$@"' --
+        files: ^services/api/.*\.cs$
+
+      # --- Python ---------------------------------------------------------------------------------
+      - id: ruff
+        name: ruff
+        language: python
+        additional_dependencies: [ruff==0.16.9]
+        entry: ruff check --fix --force-exclude
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        language: python
+        additional_dependencies: [ruff==0.16.9]
+        entry: ruff format --force-exclude
+        types: [python]
+
+      # --- commit message (rule 9) ----------------------------------------------------------------
+      - id: commitlint
+        name: conventional commit + requirement / task ID
+        language: system
+        entry: pnpm exec commitlint --edit
+        stages: [commit-msg]
+        pass_filenames: true

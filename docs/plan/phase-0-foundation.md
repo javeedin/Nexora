@@ -7,7 +7,7 @@ environment.
 
 | Task | What | Covers | Depends | Done when |
 |---|---|---|---|---|
-| P0-T01 | **Monorepo tooling**: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under `services/api`; Python `uv` project under `services/ai-platform`; shared lint/format (ESLint, Prettier, `.editorconfig`, Roslyn analyzers, Ruff, mypy); pre-commit hooks; Conventional Commits check | — | — | `pnpm build`, `dotnet build`, `uv run pytest` succeed on an empty skeleton |
+| P0-T01 ✅ | **Monorepo tooling**: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under `services/api`; Python `uv` project under `services/ai-platform`; shared lint/format (ESLint, Prettier, `.editorconfig`, Roslyn analyzers, Ruff, mypy); pre-commit hooks; Conventional Commits check | — | — | `pnpm build`, `dotnet build`, `uv run pytest` succeed on an empty skeleton |
 | P0-T02 | **CI**: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + images), gitleaks, SBOM, PR checks required; dependabot | NFR security / testing | T01 | PR shows all checks; failing test blocks merge |
 | P0-T03 | **Local dev stack** `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, Redpanda (Kafka API), Redis, MinIO (object storage), Vault dev, OTel collector + Grafana/Tempo/Loki/Prometheus, Mailpit; `make up`; seed script | — | T01 | one command brings everything up; README "Getting started" works on a clean machine |
 | P0-T04 | **DB migrations**: Liquibase project in `db/migrations` (changelog per module schema), run in CI against Oracle Free, rollback test | ADR 0007 | T03 | migration pipeline green; `platform` schema created |

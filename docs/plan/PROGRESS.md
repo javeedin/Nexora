@@ -6,9 +6,9 @@
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 0 — Foundation** (not started) |
-| Next task | **P0-T01** Monorepo tooling |
-| Blockers | P0-T24 needs the APEX workspace (`WKSP_GRAYSAPP`) + BI Publisher catalog export from the user — blocks phase 2 |
+| Current phase | **Phase 0 — Foundation** (in progress) |
+| Next task | **P0-T02** CI |
+| Blockers | P0-T24 still needs the PL/SQL + table / view DDL of `WKSP_GRAYSAPP` and the BI Publisher catalog (ORDS REST export received 2026-10-01) — blocks phase 2 |
 
 ## Phase exit criteria
 
@@ -26,7 +26,7 @@
 
 | Phase | Task | What | Status | PR / notes |
 |---|---|---|---|---|
-| 0 | P0-T01 | Monorepo tooling: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under … | todo | |
+| 0 | P0-T01 | Monorepo tooling: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under … | done | branch `claude/nifty-edison-j36zte` (PR pending) |
 | 0 | P0-T02 | CI: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + … | todo | |
 | 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | todo | |
 | 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | todo | |
@@ -49,7 +49,7 @@
 | 0 | P0-T21 | Read-only Fusion query in the web app (thin slice of SQL-01): pick pod, run SELECT, grid | todo | |
 | 0 | P0-T22 | IaC + dev environment: Terraform for OKE (cluster, registry, Vault, object storage, … | todo | |
 | 0 | P0-T23 | Observability: dashboards (API latency, errors, Fusion calls, workflow failures) with … | todo | |
-| 0 | P0-T24 | Legacy APEX export (needs the user): ORDS modules + PL/SQL of `WKSP_GRAYSAPP` and the … | todo | |
+| 0 | P0-T24 | Legacy APEX export (needs the user): ORDS modules + PL/SQL of `WKSP_GRAYSAPP` and the … | in-progress | ORDS export received (71 modules, 414 handlers); PL/SQL + DDL + BIP catalog outstanding — see open question 7 |
 | 1 | P1-T01 | AI platform service (`services/ai-platform`, FastAPI): port legacy `ai-hub/ai_hub` … | todo | |
 | 1 | P1-T02 | Router per tenant: tasks, candidates, data classes, budgets, route preview; admin UI … | todo | |
 | 1 | P1-T03 | Action / model gateway API used by .NET modules (gRPC or HTTP): `chat`, `compare`, … | todo | |
@@ -346,9 +346,12 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 3 | First production region(s): OCI Frankfurt + India / Middle East? | RD v0.1 | |
 | 4 | Pipelines engine: Dagster or Temporal-native (decided in P5-T01) | RD v0.1 | |
 | 5 | Edge agent language: .NET worker or Go | RD v0.1 | |
+| 6 | **.NET 9 support ends 2026-11-10** (STS); .NET 10 is the current LTS. Move ADR 0003 to .NET 10 before P0-T05? Repo is ready: one line (`NexoraTargetFramework` in `Directory.Build.props`) | P0-T01 | |
+| 7 | P0-T24: ORDS export covers the REST layer only. Handlers call PL/SQL not in it (`wms_*` procedures, `P_FUSION_OM_INSERT_LINE`, `RR_SYNC_JOBS_PKG`, `RR_GL_PKG`, `XXAP_*_PKG` …) and ~228 tables / views. Need: APEX › SQL Workshop › Generate DDL (all object types) + BIP catalog archive. Security debts seen for `90-legacy-map.md`: hard-coded credential in a handler, plain-text mobile-user passwords, payment credentials in JSON, a SQL-runner endpoint and `GRAYS_API_PRIVILEGE` with no roles / modules (endpoints possibly public) | P0-T01 session | |
 
 ## Session log
 
 | Date | Summary | Next |
 |---|---|---|
 | 2026-10-01 | Repo created: RD v0.1, ADRs 0001–0008, plan for phases 0–6 + later (140 tasks, 163 requirements), `legacy/v12` imported with full history (one password scrubbed) | P0-T01 |
+| 2026-10-01 | P0-T01 done: pnpm + Turborepo orchestrating TS, .NET and Python workspaces (`pnpm build/test/lint/typecheck`, `turbo --affected` ready for CI); `@nexora/config` (ESLint, Prettier, tsconfig, commitlint with requirement / task ID rule); `services/api/Nexora.sln` (analyzers as errors, central packages, lock files, xUnit v3 smoke test); `services/ai-platform` uv project (Ruff, mypy strict, pytest); local pre-commit hooks. Received ORDS export for P0-T24 (not committed yet — redaction + OK to write to `legacy/v12` pending) | P0-T02; answer open questions 6, 7 |

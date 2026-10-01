@@ -1,0 +1,12 @@
+{
+  "name": "@nexora/ai-platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Turborepo wrapper for the Python AI platform (uv project)",
+  "scripts": {
+    "build": "uv sync --locked",
+    "test": "uv run --locked pytest",
+    "lint": "uv run --locked ruff check . && uv run --locked ruff format --check .",
+    "typecheck": "uv run --locked mypy"
+  }
+}

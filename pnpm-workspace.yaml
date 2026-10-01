@@ -1,0 +1,6 @@
+# Every folder with a package.json is a Turborepo workspace — including the .NET and Python services, whose
+# package.json only wraps `dotnet` / `uv` so one `pnpm build | test | lint` (and `turbo --affected` in CI) covers all.
+packages:
+  - apps/*
+  - packages/*
+  - services/*
