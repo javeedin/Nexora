@@ -36,4 +36,11 @@ pnpm affected         # build + test + lint only what changed vs main (used by C
 Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
 Commit messages: `feat(wms): ship confirm workflow (WM-11)` — `feat` / `fix` / `perf` / `refactor` must cite a requirement or plan task ID.
 
+## CI
+
+Every PR runs **CI** (affected workspaces only: build, test, lint, typecheck, commit messages, image build + Trivy + SBOM)
+and **Security** (CodeQL, gitleaks, Trivy, dependency review). Branch protection needs just two checks: `CI ok` and
+`Security ok` — import [`.github/rulesets/main.json`](.github/rulesets/main.json) under *Settings › Rules › Rulesets*.
+Accepted scanner findings live in [`.trivyignore.yaml`](.trivyignore.yaml) and must carry an expiry date.
+
 Status: phase 0 (foundation) — see [roadmap](docs/rd/95-migration-and-roadmap.md).

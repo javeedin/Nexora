@@ -5,7 +5,8 @@
   "description": "Turborepo wrapper for the .NET modular monolith (services/api/Nexora.sln)",
   "scripts": {
     "build": "dotnet build Nexora.sln",
-    "test": "dotnet test",
-    "lint": "dotnet format Nexora.sln --verify-no-changes"
+    "test": "dotnet test --no-build",
+    "lint": "dotnet format Nexora.sln --verify-no-changes --no-restore",
+    "//": "One restore + compile in build; test and lint reuse it and run in sequence (parallel dotnet processes race on obj/)."
   }
 }

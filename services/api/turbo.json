@@ -6,10 +6,12 @@
       "cache": false
     },
     "test": {
-      "inputs": ["**/*.cs", "**/*.csproj", "**/*.json", "$TURBO_ROOT$/Directory.*.props", "$TURBO_ROOT$/global.json"]
+      "dependsOn": ["build"],
+      "inputs": ["**/*.cs", "**/*.csproj", "**/*.json"]
     },
     "lint": {
-      "inputs": ["**/*.cs", "**/*.csproj", "$TURBO_ROOT$/.editorconfig"]
+      "dependsOn": ["test"],
+      "inputs": ["**/*.cs", "**/*.csproj"]
     }
   }
 }

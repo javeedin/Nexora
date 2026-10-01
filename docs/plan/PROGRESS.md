@@ -7,7 +7,7 @@
 | Item | Value |
 |---|---|
 | Current phase | **Phase 0 — Foundation** (in progress) |
-| Next task | **P0-T02** CI |
+| Next task | **P0-T02** CI — workflows ready; finish = open PR + import `.github/rulesets/main.json`, then **P0-T03** |
 | Blockers | P0-T24 still needs the PL/SQL + table / view DDL of `WKSP_GRAYSAPP` and the BI Publisher catalog (ORDS REST export received 2026-10-01) — blocks phase 2 |
 
 ## Phase exit criteria
@@ -27,7 +27,7 @@
 | Phase | Task | What | Status | PR / notes |
 |---|---|---|---|---|
 | 0 | P0-T01 | Monorepo tooling: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under … | done | branch `claude/nifty-edison-j36zte` (PR pending) |
-| 0 | P0-T02 | CI: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + … | todo | |
+| 0 | P0-T02 | CI: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + … | in-progress | workflows + Dependabot + ruleset on branch `claude/nifty-edison-j36zte`; \"Done when\" needs a PR run and the ruleset imported (repo admin) |
 | 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | todo | |
 | 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | todo | |
 | 0 | P0-T05 | API skeleton (.NET 9): modular-monolith host, module registration, OpenAPI, … | todo | |
@@ -347,7 +347,8 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 4 | Pipelines engine: Dagster or Temporal-native (decided in P5-T01) | RD v0.1 | |
 | 5 | Edge agent language: .NET worker or Go | RD v0.1 | |
 | 6 | **.NET 9 support ends 2026-11-10** (STS); .NET 10 is the current LTS. Move ADR 0003 to .NET 10 before P0-T05? Repo is ready: one line (`NexoraTargetFramework` in `Directory.Build.props`) | P0-T01 | |
-| 7 | P0-T24: ORDS export covers the REST layer only. Handlers call PL/SQL not in it (`wms_*` procedures, `P_FUSION_OM_INSERT_LINE`, `RR_SYNC_JOBS_PKG`, `RR_GL_PKG`, `XXAP_*_PKG` …) and ~228 tables / views. Need: APEX › SQL Workshop › Generate DDL (all object types) + BIP catalog archive. Security debts seen for `90-legacy-map.md`: hard-coded credential in a handler, plain-text mobile-user passwords, payment credentials in JSON, a SQL-runner endpoint and `GRAYS_API_PRIVILEGE` with no roles / modules (endpoints possibly public) | P0-T01 session | |
+| 7 | P0-T24: ORDS export covers the REST layer only. Handlers call PL/SQL not in it (`wms_*` procedures, `P_FUSION_OM_INSERT_LINE`, `RR_SYNC_JOBS_PKG`, `RR_GL_PKG`, `XXAP_*_PKG` …) and ~228 tables / views. Need: APEX › SQL Workshop › Generate DDL (all object types) + BIP catalog archive. Security debts were found in the export; details were given to the user directly and go into `90-legacy-map.md` only once legacy material lives in a private repo (see Q8) | P0-T01 session | |
+| 8 | **Urgent — the repository is public.** Branch `legacy/v12` exposes customer names, production / test hostnames (database and Fusion pods) and customer documents; combined with the legacy security debts (Q7) this is an open door to production data. Proposal: move `legacy/v12` to a separate **private** repo (and purge it here), or make this repo private (Actions minutes + CodeQL then need a paid plan); lock down the ORDS endpoints regardless. Do **not** commit the ORDS export here while public | P0-T02 session | |
 
 ## Session log
 
@@ -355,3 +356,4 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 |---|---|---|
 | 2026-10-01 | Repo created: RD v0.1, ADRs 0001–0008, plan for phases 0–6 + later (140 tasks, 163 requirements), `legacy/v12` imported with full history (one password scrubbed) | P0-T01 |
 | 2026-10-01 | P0-T01 done: pnpm + Turborepo orchestrating TS, .NET and Python workspaces (`pnpm build/test/lint/typecheck`, `turbo --affected` ready for CI); `@nexora/config` (ESLint, Prettier, tsconfig, commitlint with requirement / task ID rule); `services/api/Nexora.sln` (analyzers as errors, central packages, lock files, xUnit v3 smoke test); `services/ai-platform` uv project (Ruff, mypy strict, pytest); local pre-commit hooks. Received ORDS export for P0-T24 (not committed yet — redaction + OK to write to `legacy/v12` pending) | P0-T02; answer open questions 6, 7 |
+| 2026-10-01 | P0-T02 (in progress): `ci.yml` (Turborepo `--affected` build / test / lint / typecheck for TS + .NET 9 + Python, commitlint on commits + PR title, pre-commit hygiene, API image build → Trivy gate + SARIF + CycloneDX SBOM, `CI ok` gate); `security.yml` (CodeQL ×4 languages, gitleaks, Trivy fs vuln / secret / IaC + SBOM, dependency review with copyleft licence deny-list, weekly run, `Security ok` gate); all actions pinned by SHA; Dependabot (actions, npm, NuGet, uv, Docker) with cooldown; `services/api/Dockerfile` (chiseled, non-root, digest-pinned); `.trivyignore.yaml` with expiring accepts; actionlint + zizmor hooks; ruleset JSON for `main`; PR template = Definition of done. Raised Q8 (public repo exposes legacy prod details) | Open PR (user OK) + import ruleset → P0-T02 done; P0-T03; answer Q6–Q8 |
