@@ -1,5 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <RootNamespace>Nexora.Api</RootNamespace>
+    <!-- OpenAPI document generated at build (rule 7) → openapi/v1.json, the source of the TS client (P0-T18). -->
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name v1</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks\Nexora.BuildingBlocks\Nexora.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Modules\Platform\Nexora.Modules.Platform\Nexora.Modules.Platform.csproj" />
+  </ItemGroup>
 </Project>

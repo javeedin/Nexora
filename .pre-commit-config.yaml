@@ -3,7 +3,7 @@
 # Every hook is local and pinned: Python tools from PyPI, TS / .NET tools from the workspace — same versions as CI.
 default_install_hook_types: [pre-commit, commit-msg]
 default_stages: [pre-commit]
-exclude: ^(pnpm-lock\.yaml|.*/packages\.lock\.json|services/ai-platform/uv\.lock)$
+exclude: ^(pnpm-lock\.yaml|.*/packages\.lock\.json|services/ai-platform/uv\.lock|services/api/openapi/.*)$
 
 repos:
   - repo: local

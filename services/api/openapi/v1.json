@@ -1,0 +1,63 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Nexora API",
+    "description": "Multi-tenant operations cloud for Oracle Fusion customers. Write requests need an Idempotency-Key header.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/platform/info": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Service name, build version and environment.",
+        "operationId": "GetPlatformInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PlatformInfo": {
+        "required": [
+          "service",
+          "version",
+          "environment"
+        ],
+        "type": "object",
+        "properties": {
+          "service": {
+            "type": "string",
+            "description": "Service name."
+          },
+          "version": {
+            "type": "string",
+            "description": "Build version."
+          },
+          "environment": {
+            "type": "string",
+            "description": "Hosting environment (Development, Staging, Production …)."
+          }
+        },
+        "description": "Public facts about the running platform."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "platform"
+    }
+  ]
+}

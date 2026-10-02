@@ -34,7 +34,7 @@ pnpm typecheck        # tsc, mypy --strict
 pnpm affected         # build + test + lint only what changed vs main (used by CI)
 ```
 
-Stack details, URLs and demo users: [`infra/compose/README.md`](infra/compose/README.md). Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
+Stack details, URLs and demo users: [`infra/compose/README.md`](infra/compose/README.md). API conventions: [`services/api/README.md`](services/api/README.md). Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
 Commit messages: `feat(wms): ship confirm workflow (WM-11)` — `feat` / `fix` / `perf` / `refactor` must cite a requirement or plan task ID.
 
 ## CI

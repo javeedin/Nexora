@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Public contract of the platform module: the only thing other modules may reference (ADR 0003). -->
+  <PropertyGroup>
+    <RootNamespace>Nexora.Modules.Platform.Contracts</RootNamespace>
+  </PropertyGroup>
+</Project>

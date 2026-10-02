@@ -75,6 +75,11 @@ jobs:
         if: github.event_name != 'pull_request'
         run: pnpm turbo run build test lint typecheck --continue
 
+      - name: OpenAPI document committed and current (rule 7 — source of the TS client)
+        run: |
+          git diff --exit-code -- services/api/openapi || {
+            echo "::error::services/api/openapi/v1.json is out of date: build services/api and commit the result"; exit 1; }
+
       - name: Root lint (ESLint + Prettier)
         run: pnpm lint:root
 
