@@ -16,7 +16,7 @@ First start pulls ~5 GB of images; later starts take under a minute.
 
 | Service | URL / address | Notes |
 |---|---|---|
-| Oracle 23ai Free | `localhost:1521/FREEPDB1` | app user `nexora` (schema owner; Liquibase in P0-T04) |
+| Oracle 23ai Free | `localhost:1521/FREEPDB1` | `nexora_migrator`; module schemas (`platform` …) are password-less, see `db/migrations` |
 | Keycloak | http://localhost:8180 | realm `nexora`; organisations `acme`, `globex` = demo tenants |
 | Temporal | gRPC `localhost:7233`, UI http://localhost:8233 | namespace `nexora` |
 | Redpanda (Kafka API) | `localhost:19092`, schema registry http://localhost:18081 | console http://localhost:8088 |

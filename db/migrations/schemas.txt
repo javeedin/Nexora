@@ -1,0 +1,3 @@
+# Module schemas, in migration order. Each one: a schema-only account created by bootstrap/ and a changelog
+# <schema>/changelog.yaml applied through the migrator's proxy connection (nexora_migrator[<schema>]).
+platform

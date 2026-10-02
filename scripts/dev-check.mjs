@@ -18,7 +18,7 @@ const tcp = (port) => () =>
   });
 
 const services = [
-  ['Oracle 23ai', 'localhost:1521/FREEPDB1  user nexora / ORACLE_APP_PASSWORD', tcp(1521)],
+  ['Oracle 23ai', 'localhost:1521/FREEPDB1  migrator nexora_migrator / ORACLE_MIGRATOR_PASSWORD', tcp(1521)],
   [
     'Keycloak',
     'http://localhost:8180  realm nexora · admin / KEYCLOAK_ADMIN_PASSWORD',

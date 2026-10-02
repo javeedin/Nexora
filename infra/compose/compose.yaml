@@ -12,8 +12,9 @@ services:
     image: gvenzl/oracle-free:23.26.3-slim-faststart
     environment:
       ORACLE_PASSWORD: ${ORACLE_PASSWORD:?run make up}
-      APP_USER: nexora
-      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD:?run make up}
+      # Migration user; module schemas are password-less schema-only accounts reached by proxy (db/migrations).
+      APP_USER: nexora_migrator
+      APP_USER_PASSWORD: ${ORACLE_MIGRATOR_PASSWORD:?run make up}
     ports: ['127.0.0.1:1521:1521']
     volumes: [oracle-data:/opt/oracle/oradata]
     healthcheck:
@@ -228,6 +229,21 @@ services:
     restart: 'no'
     depends_on:
       s3: { condition: service_healthy }
+
+  # --- Tools (not started by `up`): Liquibase migrations, see db/migrations ----------------------
+  liquibase:
+    profiles: [tools]
+    build: ../../db/migrations
+    image: nexora-liquibase:dev
+    environment:
+      DB_URL: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+      DB_ADMIN_USER: system
+      DB_ADMIN_PASSWORD: ${ORACLE_PASSWORD}
+      DB_MIGRATOR_USER: nexora_migrator
+      DB_MIGRATOR_PASSWORD: ${ORACLE_MIGRATOR_PASSWORD}
+    volumes: ['../../db/migrations:/liquibase/changelog:ro']
+    depends_on:
+      oracle: { condition: service_healthy }
 
 volumes:
   oracle-data:

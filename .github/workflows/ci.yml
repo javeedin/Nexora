@@ -150,10 +150,56 @@ jobs:
           path: sbom-${{ matrix.service }}.cdx.json
           retention-days: 90
 
+  migrations:
+    name: DB migrations (Oracle 23ai)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Changed?
+        id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != pull_request ] || git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -qE '^(db/|\.github/workflows/ci\.yml)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"; echo "no db changes — skipping"
+          fi
+      - name: Start Oracle Free (random per-run passwords)
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          admin="O$(openssl rand -hex 16)"; migrator="M$(openssl rand -hex 16)"
+          echo "::add-mask::$admin"; echo "::add-mask::$migrator"
+          { echo "DB_ADMIN_PASSWORD=$admin"; echo "DB_MIGRATOR_PASSWORD=$migrator"; } >> "$GITHUB_ENV"
+          docker run -d --name oracle -p 1521:1521 \
+            -e ORACLE_PASSWORD="$admin" -e APP_USER=nexora_migrator -e APP_USER_PASSWORD="$migrator" \
+            gvenzl/oracle-free:23.26.3-slim-faststart
+          docker build -q -t nexora-liquibase:ci db/migrations
+          for _ in $(seq 1 60); do docker exec oracle healthcheck.sh && break; sleep 5; done
+          docker exec oracle healthcheck.sh
+      - name: Migrate → roll back everything → migrate again
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          docker run --rm --network host \
+            -e DB_URL=jdbc:oracle:thin:@localhost:1521/FREEPDB1 -e DB_ADMIN_USER=system -e DB_MIGRATOR_USER=nexora_migrator \
+            -e DB_ADMIN_PASSWORD -e DB_MIGRATOR_PASSWORD nexora-liquibase:ci rollback-test
+      - name: Platform schema exists, password-less
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          out=$(echo "select username || ':' || authentication_type from dba_users where username = 'PLATFORM';" \
+            | docker exec -i -e PW="$DB_ADMIN_PASSWORD" oracle bash -c 'sqlplus -s "system/$PW@localhost/FREEPDB1"')
+          echo "$out"; echo "$out" | grep -q 'PLATFORM:NONE'
+
   ci-ok:
     name: CI ok
     if: always()
-    needs: [build-test, images]
+    needs: [build-test, images, migrations]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

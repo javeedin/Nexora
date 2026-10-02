@@ -36,7 +36,7 @@ updates:
     commit-message: { prefix: build }
 
   - package-ecosystem: docker # base-image digests
-    directories: [/services/api]
+    directories: [/services/api, /db/migrations]
     schedule: { interval: weekly, day: monday }
     commit-message: { prefix: build }
 

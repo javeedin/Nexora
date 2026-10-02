@@ -1,0 +1,14 @@
+{
+  "name": "@nexora/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Liquibase changelogs (Oracle) + convention checker. Run migrations with `make db-migrate`.",
+  "type": "module",
+  "scripts": {
+    "lint": "node tools/check-changelogs.mjs",
+    "test": "node --test tools/*.test.mjs"
+  },
+  "devDependencies": {
+    "yaml": "2.9.1"
+  }
+}

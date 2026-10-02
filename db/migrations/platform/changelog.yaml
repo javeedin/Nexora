@@ -1,0 +1,54 @@
+# Platform module schema (M0). Applied as nexora_migrator[platform]; objects land in PLATFORM.
+# Conventions (enforced by tools/check-changelogs.mjs):
+#   - changeSet id: NNNN-kebab-case, author set, every raw `sql` change has an explicit rollback
+#   - every table has `tenant_id VARCHAR2(36) NOT NULL` (rule 1) unless its remarks start with "[tenant-exempt: why]"
+databaseChangeLog:
+  - changeSet:
+      id: 0001-tenant
+      author: nexora
+      comment: Tenant registry — root of every tenant_id (lifecycle and VPD policies extend it in P0-T07)
+      changes:
+        - createTable:
+            tableName: tenant
+            remarks: '[tenant-exempt: the tenant registry itself] One row per tenant (PC-01)'
+            columns:
+              - column: { name: id, type: VARCHAR2(36), constraints: { primaryKey: true, primaryKeyName: tenant_pk } }
+              - column:
+                  {
+                    name: slug,
+                    type: VARCHAR2(63),
+                    constraints: { nullable: false, unique: true, uniqueConstraintName: tenant_slug_uk },
+                  }
+              - column: { name: name, type: VARCHAR2(200), constraints: { nullable: false } }
+              - column:
+                  { name: status, type: VARCHAR2(16), defaultValue: provisioning, constraints: { nullable: false } }
+              - column:
+                  {
+                    name: created_at,
+                    type: TIMESTAMP WITH TIME ZONE,
+                    defaultValueComputed: systimestamp,
+                    constraints: { nullable: false },
+                  }
+              - column:
+                  {
+                    name: updated_at,
+                    type: TIMESTAMP WITH TIME ZONE,
+                    defaultValueComputed: systimestamp,
+                    constraints: { nullable: false },
+                  }
+        - sql:
+            sql: >-
+              alter table tenant add constraint tenant_status_ck
+              check (status in ('provisioning', 'active', 'suspended', 'deleted'))
+        - sql:
+            sql: >-
+              alter table tenant add constraint tenant_slug_ck
+              check (regexp_like(slug, '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'))
+      rollback:
+        - dropTable: { tableName: tenant, cascadeConstraints: true }
+
+  - changeSet:
+      id: 0002-tag-p0-t04
+      author: nexora
+      changes:
+        - tagDatabase: { tag: p0-t04 }

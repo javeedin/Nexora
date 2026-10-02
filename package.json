@@ -16,11 +16,14 @@
     "affected": "turbo run build test lint --affected",
     "hooks:install": "uvx pre-commit@4.6.2 install --install-hooks --hook-type pre-commit --hook-type commit-msg",
     "commitlint": "commitlint",
-    "stack:up": "node scripts/dev-env.mjs && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env up -d --wait --wait-timeout 600 && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed-s3 && node scripts/dev-check.mjs",
+    "stack:up": "node scripts/dev-env.mjs && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env up -d --wait --wait-timeout 600 && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed-s3 && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile tools run --rm --build liquibase update && node scripts/dev-check.mjs",
     "stack:down": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env down",
     "stack:reset": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env down -v",
     "stack:check": "node scripts/dev-check.mjs",
-    "stack:smoke": "node scripts/dev-smoke.mjs"
+    "stack:smoke": "node scripts/dev-smoke.mjs",
+    "db:migrate": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile tools run --rm --build liquibase update",
+    "db:status": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile tools run --rm --build liquibase status",
+    "db:rollback-test": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile tools run --rm --build liquibase rollback-test"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

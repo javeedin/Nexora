@@ -1,0 +1,22 @@
+# Runs as the database administrator (SYSTEM locally, ADMIN on Autonomous DB) — once per environment, idempotent.
+# Creates each module schema as a *schema-only account* (no password, nobody can log in as it) that only the
+# migrator may reach, by proxy: `nexora_migrator[platform]`. Runtime users and VPD policies arrive with P0-T07.
+databaseChangeLog:
+  - property: { name: migrator, value: NEXORA_MIGRATOR, global: true }
+
+  - changeSet:
+      id: 0001-schema-platform
+      author: nexora
+      comment: Schema-only account for the platform module (tenancy, identity, RBAC, settings, audit — M0)
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck: { expectedResult: 0, sql: "select count(*) from dba_users where username = 'PLATFORM'" }
+      changes:
+        - sql: { sql: 'create user platform no authentication default tablespace users quota unlimited on users' }
+        - sql:
+            {
+              sql: 'grant create session, create table, create view, create sequence, create procedure, create trigger, create type, create synonym to platform',
+            }
+        - sql: { sql: 'alter user platform grant connect through ${migrator}' }
+      rollback:
+        - sql: { sql: 'drop user platform cascade' }

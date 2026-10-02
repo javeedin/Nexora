@@ -81,12 +81,12 @@ const checks = {
     return 'round trip ok, export 403';
   },
 
-  async 'Oracle: app user can query FREEPDB1'() {
+  async 'Oracle: migrator can query FREEPDB1'() {
     const out = exec(
       'oracle',
       'bash',
       '-c',
-      `echo "select 'nexora-ok' as r from dual;" | sqlplus -s "nexora/$APP_USER_PASSWORD@localhost/FREEPDB1"`,
+      `echo "select 'nexora-ok' as r from dual;" | sqlplus -s "nexora_migrator/$APP_USER_PASSWORD@localhost/FREEPDB1"`,
     );
     assert(out.includes('nexora-ok'), out.trim());
     return 'select from dual ok';

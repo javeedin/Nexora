@@ -6,8 +6,8 @@
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 0 — Foundation** (in progress: T01, T03 done; T02 awaiting PR) |
-| Next task | **P0-T04** DB migrations (P0-T02 still needs: PR run + ruleset import) |
+| Current phase | **Phase 0 — Foundation** (in progress: T01, T03, T04 done; T02 awaiting PR) |
+| Next task | **P0-T05** API skeleton (P0-T02 still needs: PR run + ruleset import) |
 | Blockers | P0-T24 still needs the PL/SQL + table / view DDL of `WKSP_GRAYSAPP` and the BI Publisher catalog (ORDS REST export received 2026-10-01) — blocks phase 2 |
 
 ## Phase exit criteria
@@ -29,7 +29,7 @@
 | 0 | P0-T01 | Monorepo tooling: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under … | done | branch `claude/nifty-edison-j36zte` (PR pending) |
 | 0 | P0-T02 | CI: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + … | in-progress | workflows + Dependabot + ruleset on branch `claude/nifty-edison-j36zte`; \"Done when\" needs a PR run and the ruleset imported (repo admin) |
 | 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | done | branch `claude/nifty-edison-j36zte` (PR pending): `make up` → 10 services healthy + seeded in < 1 min; `make smoke` 9 end-to-end checks; S3 = SeaweedFS (see Q9) |
-| 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | todo | |
+| 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | done | branch `claude/nifty-edison-j36zte` (PR pending): Liquibase 5 + ojdbc11 image; schema-only `platform` account reached by proxy; full rollback test in CI on Oracle Free; changelog checker enforces tenant_id NOT NULL |
 | 0 | P0-T05 | API skeleton (.NET 10): modular-monolith host, module registration, OpenAPI, … | todo | |
 | 0 | P0-T06 | Identity: OIDC (Keycloak dev, Auth0 / Entra External ID prod) with organisation = … | todo | |
 | 0 | P0-T07 | Tenancy core: `tenant` entity + lifecycle (create, suspend, delete); tenant context … | todo | |
@@ -360,3 +360,4 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 2026-10-01 | P0-T02 (in progress): `ci.yml` (Turborepo `--affected` build / test / lint / typecheck for TS + .NET 9 + Python, commitlint on commits + PR title, pre-commit hygiene, API image build → Trivy gate + SARIF + CycloneDX SBOM, `CI ok` gate); `security.yml` (CodeQL ×4 languages, gitleaks, Trivy fs vuln / secret / IaC + SBOM, dependency review with copyleft licence deny-list, weekly run, `Security ok` gate); all actions pinned by SHA; Dependabot (actions, npm, NuGet, uv, Docker) with cooldown; `services/api/Dockerfile` (chiseled, non-root, digest-pinned); `.trivyignore.yaml` with expiring accepts; actionlint + zizmor hooks; ruleset JSON for `main`; PR template = Definition of done. Raised Q8 (public repo exposes legacy prod details) | Open PR (user OK) + import ruleset → P0-T02 done; P0-T03; answer Q6–Q8 |
 | 2026-10-01 | Moved to **.NET 10 LTS** (user OK; ADR 0009 supersedes the version in ADR 0003; RD, CLAUDE.md, README updated): `net10.0`, `global.json` 10.0 (`latestFeature`), Mvc.Testing 10.0.12, SDK / chiseled runtime images 10.0 pinned by digest, CI uses `global.json`; lock files refreshed; build, tests, image smoke run and Trivy scans pass | Open PR (user OK) + import ruleset → P0-T02 done; P0-T03; Q7, Q8 |
 | 2026-10-02 | P0-T03 done: `infra/compose` (Oracle 23ai Free, Keycloak 26 realm with organisations = tenants, Temporal dev server + UI, Redpanda + console, Redis, SeaweedFS S3, Vault dev, Grafana LGTM, Mailpit), all on 127.0.0.1, random per-machine creds in gitignored `.env`; idempotent seed (Vault transit key per tenant + least-privilege policy, S3 bucket); `make up / smoke / check / down / reset` + `pnpm stack:*`; `Dev stack` workflow + Dependabot for compose images. Raised Q9 | P0-T04; still: PR + ruleset (P0-T02), Q7–Q9 |
+| 2026-10-02 | P0-T04 done: `db/migrations` — bootstrap (as admin, idempotent) creates module schemas as Oracle 23ai schema-only accounts (no password) reachable only via `nexora_migrator[<schema>]`; `platform/changelog.yaml` with `tenant` registry (slug / status checks); `migrate.sh` update / status / rollback-test (rolls back everything, verifies, re-applies); `make db-*`, `make up` migrates; CI job on a throwaway Oracle with per-run random passwords; `@nexora/db` convention checker (rule 1: every table has `tenant_id VARCHAR2(36) NOT NULL` unless `[tenant-exempt: why]`). Compose Oracle app user renamed to `nexora_migrator` (run `make reset` once) | P0-T05; still: PR + ruleset (P0-T02), Q7–Q9 |
