@@ -6,8 +6,8 @@
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 0 — Foundation** (in progress) |
-| Next task | **P0-T02** CI — workflows ready; finish = open PR + import `.github/rulesets/main.json`, then **P0-T03** |
+| Current phase | **Phase 0 — Foundation** (in progress: T01, T03 done; T02 awaiting PR) |
+| Next task | **P0-T04** DB migrations (P0-T02 still needs: PR run + ruleset import) |
 | Blockers | P0-T24 still needs the PL/SQL + table / view DDL of `WKSP_GRAYSAPP` and the BI Publisher catalog (ORDS REST export received 2026-10-01) — blocks phase 2 |
 
 ## Phase exit criteria
@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | 0 | P0-T01 | Monorepo tooling: pnpm workspaces + Turborepo for TS; .NET solution `Nexora.sln` under … | done | branch `claude/nifty-edison-j36zte` (PR pending) |
 | 0 | P0-T02 | CI: GitHub Actions — build + test per workspace (affected only), CodeQL, Trivy (deps + … | in-progress | workflows + Dependabot + ruleset on branch `claude/nifty-edison-j36zte`; \"Done when\" needs a PR run and the ruleset imported (repo admin) |
-| 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | todo | |
+| 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | done | branch `claude/nifty-edison-j36zte` (PR pending): `make up` → 10 services healthy + seeded in < 1 min; `make smoke` 9 end-to-end checks; S3 = SeaweedFS (see Q9) |
 | 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | todo | |
 | 0 | P0-T05 | API skeleton (.NET 10): modular-monolith host, module registration, OpenAPI, … | todo | |
 | 0 | P0-T06 | Identity: OIDC (Keycloak dev, Auth0 / Entra External ID prod) with organisation = … | todo | |
@@ -349,6 +349,7 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 6 | **.NET 9 support ends 2026-11-10** (STS); .NET 10 is the current LTS. Move ADR 0003 to .NET 10 before P0-T05? Repo is ready: one line (`NexoraTargetFramework` in `Directory.Build.props`) | P0-T01 | **Yes** — ADR 0009, moved to .NET 10 on 2026-10-01 |
 | 7 | P0-T24: ORDS export covers the REST layer only. Handlers call PL/SQL not in it (`wms_*` procedures, `P_FUSION_OM_INSERT_LINE`, `RR_SYNC_JOBS_PKG`, `RR_GL_PKG`, `XXAP_*_PKG` …) and ~228 tables / views. Need: APEX › SQL Workshop › Generate DDL (all object types) + BIP catalog archive. Security debts were found in the export; details were given to the user directly and go into `90-legacy-map.md` only once legacy material lives in a private repo (see Q8) | P0-T01 session | |
 | 8 | **Urgent — the repository is public.** Branch `legacy/v12` exposes customer names, production / test hostnames (database and Fusion pods) and customer documents; combined with the legacy security debts (Q7) this is an open door to production data. Proposal: move `legacy/v12` to a separate **private** repo (and purge it here), or make this repo private (Actions minutes + CodeQL then need a paid plan); lock down the ORDS endpoints regardless. Do **not** commit the ORDS export here while public | P0-T02 session | |
+| 9 | Dev-stack substitutions (decided in P0-T03, please confirm): **SeaweedFS instead of MinIO** — MinIO stopped publishing community images; Nexora uses only the S3 API, prod stays OCI Object Storage. **Redis 8 is AGPL** upstream: fine locally; for production use the cloud's managed cache (OCI Cache) or Valkey — decide before P0-T22 | P0-T03 | |
 
 ## Session log
 
@@ -358,3 +359,4 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 2026-10-01 | P0-T01 done: pnpm + Turborepo orchestrating TS, .NET and Python workspaces (`pnpm build/test/lint/typecheck`, `turbo --affected` ready for CI); `@nexora/config` (ESLint, Prettier, tsconfig, commitlint with requirement / task ID rule); `services/api/Nexora.sln` (analyzers as errors, central packages, lock files, xUnit v3 smoke test); `services/ai-platform` uv project (Ruff, mypy strict, pytest); local pre-commit hooks. Received ORDS export for P0-T24 (not committed yet — redaction + OK to write to `legacy/v12` pending) | P0-T02; answer open questions 6, 7 |
 | 2026-10-01 | P0-T02 (in progress): `ci.yml` (Turborepo `--affected` build / test / lint / typecheck for TS + .NET 9 + Python, commitlint on commits + PR title, pre-commit hygiene, API image build → Trivy gate + SARIF + CycloneDX SBOM, `CI ok` gate); `security.yml` (CodeQL ×4 languages, gitleaks, Trivy fs vuln / secret / IaC + SBOM, dependency review with copyleft licence deny-list, weekly run, `Security ok` gate); all actions pinned by SHA; Dependabot (actions, npm, NuGet, uv, Docker) with cooldown; `services/api/Dockerfile` (chiseled, non-root, digest-pinned); `.trivyignore.yaml` with expiring accepts; actionlint + zizmor hooks; ruleset JSON for `main`; PR template = Definition of done. Raised Q8 (public repo exposes legacy prod details) | Open PR (user OK) + import ruleset → P0-T02 done; P0-T03; answer Q6–Q8 |
 | 2026-10-01 | Moved to **.NET 10 LTS** (user OK; ADR 0009 supersedes the version in ADR 0003; RD, CLAUDE.md, README updated): `net10.0`, `global.json` 10.0 (`latestFeature`), Mvc.Testing 10.0.12, SDK / chiseled runtime images 10.0 pinned by digest, CI uses `global.json`; lock files refreshed; build, tests, image smoke run and Trivy scans pass | Open PR (user OK) + import ruleset → P0-T02 done; P0-T03; Q7, Q8 |
+| 2026-10-02 | P0-T03 done: `infra/compose` (Oracle 23ai Free, Keycloak 26 realm with organisations = tenants, Temporal dev server + UI, Redpanda + console, Redis, SeaweedFS S3, Vault dev, Grafana LGTM, Mailpit), all on 127.0.0.1, random per-machine creds in gitignored `.env`; idempotent seed (Vault transit key per tenant + least-privilege policy, S3 bucket); `make up / smoke / check / down / reset` + `pnpm stack:*`; `Dev stack` workflow + Dependabot for compose images. Raised Q9 | P0-T04; still: PR + ruleset (P0-T02), Q7–Q9 |

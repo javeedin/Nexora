@@ -21,9 +21,10 @@ governed AI agents in one multi-tenant subscription.
 
 ## Getting started
 
-Prerequisites: Node 22 (`.nvmrc`) with pnpm 10 (`corepack enable`), .NET SDK 10 (`global.json`), [uv](https://docs.astral.sh/uv/) (installs Python 3.12 itself).
+Prerequisites: Node 22 (`.nvmrc`) with pnpm 10 (`corepack enable`), .NET SDK 10 (`global.json`), [uv](https://docs.astral.sh/uv/) (installs Python 3.12 itself), Docker.
 
 ```sh
+make up               # local stack: Oracle, Keycloak, Temporal, Kafka, Redis, S3, Vault, Grafana, Mailpit (infra/compose)
 pnpm install          # TS workspaces + tooling
 pnpm hooks:install    # pre-commit + commit-msg hooks (format, lint, secrets, Conventional Commits + requirement IDs)
 pnpm build            # every workspace: TS, services/api (dotnet build), services/ai-platform (uv sync)
@@ -33,7 +34,7 @@ pnpm typecheck        # tsc, mypy --strict
 pnpm affected         # build + test + lint only what changed vs main (used by CI)
 ```
 
-Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
+Stack details, URLs and demo users: [`infra/compose/README.md`](infra/compose/README.md). Each service still works on its own: `dotnet build services/api/Nexora.sln`, `cd services/ai-platform && uv run pytest`.
 Commit messages: `feat(wms): ship confirm workflow (WM-11)` — `feat` / `fix` / `perf` / `refactor` must cite a requirement or plan task ID.
 
 ## CI

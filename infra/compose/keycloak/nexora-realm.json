@@ -1,0 +1,87 @@
+{
+  "realm": "nexora",
+  "displayName": "Nexora (local dev)",
+  "enabled": true,
+  "organizationsEnabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "none",
+  "accessTokenLifespan": 900,
+  "roles": {
+    "realm": [
+      { "name": "platform-admin", "description": "Vendor console (PC-14)" },
+      { "name": "tenant-admin", "description": "Tenant admin console (PC-13)" },
+      { "name": "user", "description": "Regular tenant user" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "nexora-web",
+      "name": "Nexora web app",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:5173/*" },
+      "defaultClientScopes": ["openid", "profile", "email", "roles", "organization"]
+    },
+    {
+      "clientId": "nexora-dev-cli",
+      "name": "Dev / test token client (password grant, local only)",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["openid", "profile", "email", "roles", "organization"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@acme.test",
+      "email": "admin@acme.test",
+      "emailVerified": true,
+      "firstName": "Ada",
+      "lastName": "Admin",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "${NEXORA_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["tenant-admin", "user"]
+    },
+    {
+      "username": "user@globex.test",
+      "email": "user@globex.test",
+      "emailVerified": true,
+      "firstName": "Gus",
+      "lastName": "User",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "${NEXORA_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "vendor@nexora.test",
+      "email": "vendor@nexora.test",
+      "emailVerified": true,
+      "firstName": "Vera",
+      "lastName": "Vendor",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "${NEXORA_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["platform-admin"]
+    }
+  ],
+  "organizations": [
+    {
+      "name": "Acme",
+      "alias": "acme",
+      "enabled": true,
+      "domains": [{ "name": "acme.test", "verified": true }],
+      "members": [{ "username": "admin@acme.test", "membershipType": "MANAGED" }]
+    },
+    {
+      "name": "Globex",
+      "alias": "globex",
+      "enabled": true,
+      "domains": [{ "name": "globex.test", "verified": true }],
+      "members": [{ "username": "user@globex.test", "membershipType": "MANAGED" }]
+    }
+  ]
+}

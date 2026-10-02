@@ -1,0 +1,238 @@
+# Nexora local dev stack (P0-T03). Start everything: `make up` (or `pnpm stack:up` without make).
+# Dev only: ports bind to 127.0.0.1; credentials are random per machine, generated into infra/compose/.env (gitignored).
+name: nexora
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # --- System of record (ADR 0007) --------------------------------------------------------------
+  oracle:
+    <<: *restart
+    image: gvenzl/oracle-free:23.26.3-slim-faststart
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?run make up}
+      APP_USER: nexora
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD:?run make up}
+    ports: ['127.0.0.1:1521:1521']
+    volumes: [oracle-data:/opt/oracle/oradata]
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh']
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  # --- Identity: OIDC dev IdP with organisations = tenants (PC-04) -------------------------------
+  keycloak:
+    <<: *restart
+    image: keycloak/keycloak:26.8.0
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?run make up}
+      KC_HEALTH_ENABLED: 'true'
+      KC_HTTP_PORT: '8180'
+      NEXORA_DEV_USER_PASSWORD: ${NEXORA_DEV_USER_PASSWORD:?run make up}
+    ports: ['127.0.0.1:8180:8180']
+    volumes: ['./keycloak:/opt/keycloak/data/import:ro']
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # --- Workflows (ADR 0005): dev server with built-in UI, SQLite persistence ---------------------
+  temporal:
+    <<: *restart
+    image: temporalio/temporal:1.9.1
+    command:
+      - server
+      - start-dev
+      - --ip=0.0.0.0
+      - --db-filename=/data/temporal.db
+      - --namespace=nexora
+    user: '0:0' # named volume is root-owned; dev only
+    ports: ['127.0.0.1:7233:7233', '127.0.0.1:8233:8233']
+    volumes: [temporal-data:/data]
+    healthcheck:
+      test: ['CMD', 'temporal', 'operator', 'cluster', 'health', '--address', '127.0.0.1:7233']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # --- Events: Kafka API (Redpanda) + console ---------------------------------------------------
+  redpanda:
+    <<: *restart
+    image: redpandadata/redpanda:v26.2.3
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+      - --schema-registry-addr=internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr=redpanda:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports: ['127.0.0.1:19092:19092', '127.0.0.1:18081:18081']
+    volumes: [redpanda-data:/var/lib/redpanda/data]
+    healthcheck:
+      test: ['CMD', 'rpk', 'cluster', 'health', '--exit-when-healthy']
+      interval: 10s
+      timeout: 10s
+      retries: 30
+  redpanda-console:
+    <<: *restart
+    image: redpandadata/console:v3.12.0
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      SCHEMAREGISTRY_ENABLED: 'true'
+      SCHEMAREGISTRY_URLS: http://redpanda:8081
+    ports: ['127.0.0.1:8088:8080']
+    depends_on:
+      redpanda: { condition: service_healthy }
+
+  # --- Cache / rate limits ----------------------------------------------------------------------
+  redis:
+    <<: *restart
+    image: redis:8.8.3-alpine
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:?run make up}', '--appendonly', 'yes']
+    ports: ['127.0.0.1:6379:6379']
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  # --- Object storage, S3 API (PC-10). SeaweedFS: MinIO stopped publishing community images. ----
+  s3:
+    <<: *restart
+    image: chrislusf/seaweedfs:4.48
+    command:
+      [
+        'server',
+        '-dir=/data',
+        '-s3',
+        '-s3.port=8333',
+        '-s3.config=/etc/seaweedfs/s3.json',
+        '-master.volumeSizeLimitMB=256',
+      ]
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mkdir -p /etc/seaweedfs
+        cat > /etc/seaweedfs/s3.json <<JSON
+        {"identities":[{"name":"nexora","credentials":[{"accessKey":"$$S3_ACCESS_KEY","secretKey":"$$S3_SECRET_KEY"}],"actions":["Admin","Read","Write","List","Tagging"]}]}
+        JSON
+        exec /entrypoint.sh "$$@"
+      - --
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?run make up}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?run make up}
+    ports: ['127.0.0.1:8333:8333', '127.0.0.1:9333:9333']
+    volumes: [s3-data:/data]
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null http://127.0.0.1:8333/healthz || wget -q -O /dev/null http://127.0.0.1:9333/cluster/status',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # --- Secrets: Vault dev server (rule 3; per-tenant keys via transit) ---------------------------
+  vault:
+    <<: *restart
+    image: hashicorp/vault:1.21.4
+    command: ['server', '-dev', '-dev-listen-address=0.0.0.0:8200']
+    cap_add: [IPC_LOCK]
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:?run make up}
+      VAULT_ADDR: http://127.0.0.1:8200
+    ports: ['127.0.0.1:8200:8200']
+    healthcheck:
+      test: ['CMD', 'vault', 'status']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # --- Observability: OTel collector + Grafana, Tempo, Loki, Prometheus in one image -------------
+  otel-lgtm:
+    <<: *restart
+    image: grafana/otel-lgtm:0.34.0
+    ports:
+      - '127.0.0.1:3000:3000' # Grafana
+      - '127.0.0.1:4317:4317' # OTLP gRPC
+      - '127.0.0.1:4318:4318' # OTLP HTTP
+    volumes: [lgtm-data:/data]
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -sf http://127.0.0.1:3000/api/health && curl -s -o /dev/null http://127.0.0.1:4318/v1/traces',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # --- E-mail sink -------------------------------------------------------------------------------
+  mailpit:
+    <<: *restart
+    image: axllent/mailpit:v1.31.3
+    ports: ['127.0.0.1:1025:1025', '127.0.0.1:8025:8025']
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # --- One-shot seed: Vault engines / policy / per-tenant keys, S3 bucket (Kafka topics: P0-T17) ---
+  seed:
+    profiles: [seed] # run by `make up` after the stack is healthy
+    image: hashicorp/vault:1.21.4
+    entrypoint: ['sh', '/seed/seed.sh']
+    restart: 'no'
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+      SEED_TENANTS: ${SEED_TENANTS:-acme,globex}
+    volumes: ['./seed:/seed:ro']
+    depends_on:
+      vault: { condition: service_healthy }
+      s3: { condition: service_healthy }
+  seed-s3:
+    profiles: [seed]
+    image: chrislusf/seaweedfs:4.48
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if echo 's3.bucket.list' | weed shell -master=s3:9333 | grep -qw nexora-files; then
+          echo 'bucket nexora-files exists'
+        else
+          echo 's3.bucket.create -name nexora-files' | weed shell -master=s3:9333 && echo 'bucket nexora-files created'
+        fi
+    restart: 'no'
+    depends_on:
+      s3: { condition: service_healthy }
+
+volumes:
+  oracle-data:
+  temporal-data:
+  redpanda-data:
+  redis-data:
+  s3-data:
+  lgtm-data:

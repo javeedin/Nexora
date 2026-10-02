@@ -23,3 +23,6 @@ coverage/
 .mypy_cache/
 .ruff_cache/
 TestResults/
+
+# local dev stack secrets
+infra/compose/.env

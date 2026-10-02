@@ -1,21 +1,26 @@
 {
   "name": "nexora",
   "private": true,
-  "description": "Nexora monorepo — TS, .NET and Python workspaces orchestrated by Turborepo",
+  "description": "Nexora monorepo \u2014 TS, .NET and Python workspaces orchestrated by Turborepo",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22.13"
   },
   "scripts": {
     "build": "turbo run build",
-    "test": "turbo run test",
+    "test": "turbo run test && node --test scripts/*.test.mjs",
     "lint": "turbo run lint && pnpm run lint:root",
     "lint:root": "eslint . && prettier --check .",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "affected": "turbo run build test lint --affected",
     "hooks:install": "uvx pre-commit@4.6.2 install --install-hooks --hook-type pre-commit --hook-type commit-msg",
-    "commitlint": "commitlint"
+    "commitlint": "commitlint",
+    "stack:up": "node scripts/dev-env.mjs && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env up -d --wait --wait-timeout 600 && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed && docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env --profile seed run --rm seed-s3 && node scripts/dev-check.mjs",
+    "stack:down": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env down",
+    "stack:reset": "docker compose -f infra/compose/compose.yaml --env-file infra/compose/.env down -v",
+    "stack:check": "node scripts/dev-check.mjs",
+    "stack:smoke": "node scripts/dev-smoke.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

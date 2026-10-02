@@ -39,3 +39,11 @@ updates:
     directories: [/services/api]
     schedule: { interval: weekly, day: monday }
     commit-message: { prefix: build }
+
+  - package-ecosystem: docker-compose # local dev stack images
+    directory: /infra/compose
+    schedule: { interval: weekly, day: monday }
+    cooldown: { default-days: 7 }
+    groups:
+      dev-stack: { patterns: ['*'] }
+    commit-message: { prefix: build }
