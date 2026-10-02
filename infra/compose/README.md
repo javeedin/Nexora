@@ -30,6 +30,11 @@ First start pulls ~5 GB of images; later starts take under a minute.
 Demo users `admin@acme.test` (tenant admin), `user@globex.test` (user), `vendor@nexora.test` (platform admin) share
 `NEXORA_DEV_USER_PASSWORD`. The `nexora-dev-cli` client allows the password grant for tests — local only.
 
+**Sign-in** (ADR 0010): login page http://localhost:8180/realms/nexora/account (themed, username or e-mail, remember
+me). Tokens: issuer `http://localhost:8180/realms/nexora`, audience `nexora-api`, tenant in `tenants`. Asking for
+`acr_values=mfa` adds the OTP step (set up on first use). Self-registration is off; invitations from
+`POST /api/v1/platform/invitations` arrive in Mailpit. Five wrong passwords lock the account for a while.
+
 **Notes**
 - Every port binds to `127.0.0.1` only.
 - Vault runs in dev mode (in memory): `make up` re-seeds keys after a restart; secrets written to it do not survive.

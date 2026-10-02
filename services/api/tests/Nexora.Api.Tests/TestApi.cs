@@ -1,4 +1,7 @@
+using System.Collections.Concurrent;
+using System.Net.Http.Headers;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Nexora.BuildingBlocks.Http;
 using Nexora.BuildingBlocks.Idempotency;
 using Nexora.BuildingBlocks.Modules;
+using Nexora.BuildingBlocks.Security;
+using Nexora.Modules.Platform.Identity;
 
 namespace Nexora.Api.Tests;
 
@@ -44,6 +49,7 @@ public sealed class TestModule : IModule
                 var n = Interlocked.Increment(ref _executions);
                 return TypedResults.Created($"/things/{n}", new { id = n, body.Name, body.Quantity });
             })
+            .RequireAuthorization(NexoraPolicies.TenantMember)
             .WithValidation<CreateThing>()
             .WithIdempotency();
 
@@ -52,6 +58,7 @@ public sealed class TestModule : IModule
                 Interlocked.Increment(ref _executions);
                 return TypedResults.Problem("boom", statusCode: 500);
             })
+            .RequireAuthorization(NexoraPolicies.TenantMember)
             .WithIdempotency();
 
         group.MapPost("/slow", async () =>
@@ -60,6 +67,7 @@ public sealed class TestModule : IModule
                 await SlowGate.Task;
                 return TypedResults.Ok();
             })
+            .RequireAuthorization(NexoraPolicies.TenantMember)
             .WithIdempotency();
     }
 }
@@ -69,21 +77,57 @@ public sealed class TestApi : WebApplicationFactory<Program>
 {
     public Dictionary<string, string?>? Settings { get; init; }
 
+    public FakeIdentityAdmin Identity { get; } = new();
+
+    /// <summary>Validates real Keycloak tokens instead of test-signed ones (Testcontainers test).</summary>
+    public string? RealAuthority { get; init; }
+
     public TestModule Module { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
-        if (Settings is not null)
+        var settings = new Dictionary<string, string?>(Settings ?? []);
+        if (RealAuthority is not null)
         {
-            builder.ConfigureAppConfiguration(c => c.AddInMemoryCollection(Settings));
+            settings["Auth:Authority"] = RealAuthority;
+            settings["Auth:RequireHttpsMetadata"] = "false";
         }
+
+        // Plain-HTTP metadata is allowed in Development only — the real-Keycloak test needs it.
+        builder.UseEnvironment(RealAuthority is null ? "Testing" : "Development");
+        builder.ConfigureAppConfiguration(c => c.AddInMemoryCollection(settings));
 
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IModule>(Module);
             services.AddScoped<IValidator<CreateThing>, CreateThingValidator>();
+            services.AddSingleton<IIdentityAdmin>(Identity);
+            services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, jwt =>
+            {
+                if (RealAuthority is not null)
+                {
+                    return;
+                }
+
+                jwt.Authority = null;
+                jwt.TokenValidationParameters.ValidIssuer = TestTokens.Issuer;
+                jwt.TokenValidationParameters.ValidAudience = TestTokens.Audience;
+                jwt.TokenValidationParameters.IssuerSigningKey = TestTokens.Key;
+            });
         });
+    }
+
+    /// <summary>Client sending a bearer token for <paramref name="user"/> (default: Acme admin) and optional tenant header.</summary>
+    public HttpClient ClientFor(TestUser? user = null, string? tenant = null)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestTokens.For(user ?? TestUser.AcmeAdmin));
+        if (tenant is not null)
+        {
+            client.DefaultRequestHeaders.Add("X-Nexora-Tenant", tenant);
+        }
+
+        return client;
     }
 
     public static HttpRequestMessage Post(string path, object? body, string? key = null)
@@ -98,5 +142,24 @@ public sealed class TestApi : WebApplicationFactory<Program>
         }
 
         return request;
+    }
+}
+
+/// <summary>Records invitations instead of calling Keycloak.</summary>
+public sealed class FakeIdentityAdmin : IIdentityAdmin
+{
+    public ConcurrentQueue<(string TenantId, string Email)> Invitations { get; } = new();
+
+    public HashSet<string> ExistingMembers { get; } = [];
+
+    public Task InviteToTenantAsync(string tenantId, string email, string? firstName, string? lastName, CancellationToken cancellationToken)
+    {
+        if (ExistingMembers.Contains(email))
+        {
+            throw new IdentityConflictException($"{email} is already a member of this tenant.");
+        }
+
+        Invitations.Enqueue((tenantId, email));
+        return Task.CompletedTask;
     }
 }

@@ -1,8 +1,9 @@
+using Microsoft.OpenApi;
 using Nexora.BuildingBlocks.Http;
 using Nexora.BuildingBlocks.Idempotency;
 using Nexora.BuildingBlocks.Modules;
 using Nexora.BuildingBlocks.Observability;
-using Nexora.BuildingBlocks.Tenancy;
+using Nexora.BuildingBlocks.Security;
 using Nexora.Modules.Platform;
 using Scalar.AspNetCore;
 
@@ -14,11 +15,24 @@ builder.Services.AddNexoraProblemDetails();
 builder.Services.AddNexoraRateLimiting();
 builder.Services.AddNexoraIdempotency();
 builder.Services.AddNexoraHealth();
-builder.Services.AddScoped<ITenantContext, NoTenantContext>(); // P0-T07: resolved from the token
+builder.Services.AddNexoraSecurity(); // OIDC (Keycloak, ADR 0010): user, tenant and roles from the token
 builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer((document, _, _) =>
 {
     document.Info.Title = "Nexora API";
-    document.Info.Description = "Multi-tenant operations cloud for Oracle Fusion customers. Write requests need an Idempotency-Key header.";
+    document.Info.Description = "Multi-tenant operations cloud for Oracle Fusion customers. Bearer token (OIDC) required "
+        + "unless noted; write requests need an Idempotency-Key header; users in several tenants send X-Nexora-Tenant.";
+    document.Components ??= new OpenApiComponents();
+    document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+    {
+        ["bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Access token from the Nexora identity provider (Keycloak realm `nexora`, ADR 0010).",
+        },
+    };
+    document.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference("bearer", document)] = [] }];
     return Task.CompletedTask;
 }));
 
@@ -28,14 +42,16 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseRateLimiter();
-app.UseNexoraIdempotency();
+app.UseNexoraSecurity();   // authenticate; tenant + user on traces and logs
+app.UseRateLimiter();      // partitions by tenant
+app.UseAuthorization();    // authenticated by default; module policies
+app.UseNexoraIdempotency(); // after authorization: unauthorized calls never claim keys
 
 app.MapNexoraHealth();
-app.MapOpenApi();
+app.MapOpenApi().AllowAnonymous();
 if (app.Environment.IsDevelopment())
 {
-    app.MapScalarApiReference("/docs");
+    app.MapScalarApiReference("/docs").AllowAnonymous();
 }
 
 app.MapModules();

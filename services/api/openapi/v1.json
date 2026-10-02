@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Nexora API",
-    "description": "Multi-tenant operations cloud for Oracle Fusion customers. Write requests need an Idempotency-Key header.",
+    "description": "Multi-tenant operations cloud for Oracle Fusion customers. Bearer token (OIDC) required unless noted; write requests need an Idempotency-Key header; users in several tenants send X-Nexora-Tenant.",
     "version": "1.0.0"
   },
   "paths": {
@@ -26,10 +26,249 @@
           }
         }
       }
+    },
+    "/api/v1/platform/me": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "The signed-in user: tenant(s), roles, MFA state.",
+        "operationId": "GetMe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/invitations": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "summary": "Invite someone by e-mail to the current tenant (tenant admin, MFA).",
+        "operationId": "InviteUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "InvitationResponse": {
+        "required": [
+          "email",
+          "tenantId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Invited e-mail."
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "Tenant joined on acceptance."
+          },
+          "status": {
+            "type": "string",
+            "description": "`sent`."
+          }
+        },
+        "description": "Result of an invitation."
+      },
+      "InviteUserRequest": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail the invitation goes to."
+          },
+          "firstName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional first name."
+          },
+          "lastName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional last name."
+          }
+        },
+        "description": "Invite someone to the current tenant (PC-04)."
+      },
+      "MeResponse": {
+        "required": [
+          "userId",
+          "username",
+          "email",
+          "name",
+          "tenant",
+          "tenants",
+          "roles",
+          "mfa"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Stable user id."
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Login name."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "E-mail."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Display name."
+          },
+          "tenant": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Tenant this request acts for (null if the user must choose one).",
+                "$ref": "#/components/schemas/TenantSummary"
+              }
+            ]
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantSummary"
+            },
+            "description": "All tenants of the user."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles."
+          },
+          "mfa": {
+            "type": "boolean",
+            "description": "Signed in with a second factor."
+          }
+        },
+        "description": "The signed-in user as the API sees them."
+      },
       "PlatformInfo": {
         "required": [
           "service",
@@ -52,9 +291,78 @@
           }
         },
         "description": "Public facts about the running platform."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TenantSummary": {
+        "required": [
+          "id",
+          "alias"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tenant id (UUID)."
+          },
+          "alias": {
+            "type": "string",
+            "description": "Tenant alias, e.g. `acme`."
+          }
+        },
+        "description": "A tenant reference."
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "description": "Access token from the Nexora identity provider (Keycloak realm `nexora`, ADR 0010).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
+  "security": [
+    {
+      "bearer": [ ]
+    }
+  ],
   "tags": [
     {
       "name": "platform"

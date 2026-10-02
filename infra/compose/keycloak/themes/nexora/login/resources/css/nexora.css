@@ -1,0 +1,36 @@
+/* Nexora branding on top of keycloak.v2. Tokens first; dark mode via the parent's pf-v5-theme-dark class. */
+:root {
+  --nexora-accent: #0f6cbd;
+  --nexora-accent-hover: #0c5aa0;
+  --nexora-ink: #1b1f24;
+  --nexora-muted: #5b6470;
+  --nexora-page: #f4f6f9;
+}
+:root.pf-v5-theme-dark {
+  --nexora-accent: #4ea1ea;
+  --nexora-accent-hover: #74b6f0;
+  --nexora-ink: #e8edf3;
+  --nexora-muted: #a3adb9;
+  --nexora-page: #12161b;
+}
+.pf-v5-c-login {
+  background: var(--nexora-page);
+}
+.nexora-brand {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--nexora-ink);
+}
+.nexora-tagline {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--nexora-muted);
+}
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--nexora-accent);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--nexora-accent-hover);
+}

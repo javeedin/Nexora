@@ -36,7 +36,7 @@
 | Pipelines | Dagster (or Temporal-based runner first, evolved from `pipeline-server/`), dbt for transforms | Incremental watermarks, merge, CDC later |
 | Analytics | Parquet on object storage + DuckDB engine (evolved from `engine/FusionModel/` semantic engine), dbt, Power BI / Superset; semantic layer API | DAX-compatible measures kept |
 | Database | Oracle 23ai (system of record; JSON, vector search available), Liquibase migrations, per-tenant VPD | Postgres possible for platform metadata if preferred |
-| Auth | OIDC (Auth0 / Entra External ID / Keycloak organisations), SCIM, OPA for policies | |
+| Auth | OIDC with **Keycloak** (self-hosted, organisations = tenants, ADR 0010), SCIM, OPA for policies | |
 | Secrets | HashiCorp Vault / OCI Vault / Azure Key Vault, per-tenant keys (envelope encryption) | No credentials in tables or browser storage |
 | Observability | OpenTelemetry → Grafana (Tempo, Loki, Prometheus, Mimir) or Datadog; Sentry (front end) | Trace from click to Fusion call |
 | Delivery | GitHub Actions (build, test, CodeQL, Trivy, gitleaks, SBOM), container images, Helm, Argo CD, Terraform | Environments: dev, test, staging, prod per region |

@@ -13,7 +13,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [InlineData("/health/ready")]
     public async Task Health_endpoints_answer(string path)
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var response = await client.GetAsync(new Uri(path, UriKind.Relative), Ct);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -21,7 +21,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Platform_info_is_served_under_api_v1()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var info = await client.GetFromJsonAsync<JsonElement>("/api/v1/platform/info", Ct);
         Assert.Equal("nexora-api", info.GetProperty("service").GetString());
     }
@@ -29,7 +29,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Errors_are_problem_details_with_trace_id()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var response = await client.GetAsync(new Uri("/api/v1/does-not-exist", UriKind.Relative), Ct);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -40,7 +40,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Invalid_request_is_rejected_with_field_errors_before_the_handler_runs()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var before = api.Module.Executions;
         var response = await client.SendAsync(TestApi.Post("/api/v1/test/things", new { name = "", quantity = 0 }, NewKey()), Ct);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -57,7 +57,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [InlineData("has spaces in it")]
     public async Task Write_without_valid_idempotency_key_is_rejected(string? key)
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var response = await client.SendAsync(TestApi.Post("/api/v1/test/things", new { name = "a", quantity = 1 }, key), Ct);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("Idempotency-Key", await response.Content.ReadAsStringAsync(Ct), StringComparison.Ordinal);
@@ -66,7 +66,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Same_key_and_request_replays_the_first_response_without_executing_again()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var key = NewKey();
         var body = new { name = "pallet", quantity = 3 };
         var before = api.Module.Executions;
@@ -85,7 +85,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Same_key_with_a_different_request_is_422()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var key = NewKey();
         await client.SendAsync(TestApi.Post("/api/v1/test/things", new { name = "a", quantity = 1 }, key), Ct);
         var reuse = await client.SendAsync(TestApi.Post("/api/v1/test/things", new { name = "a", quantity = 2 }, key), Ct);
@@ -95,7 +95,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Server_errors_are_not_stored_so_a_retry_executes_again()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var key = NewKey();
         var before = api.Module.Executions;
         var first = await client.SendAsync(TestApi.Post("/api/v1/test/fail", null, key), Ct);
@@ -108,7 +108,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Concurrent_duplicate_while_first_is_running_is_409()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var key = NewKey();
         api.Module.SlowGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var started = api.Module.Executions;
@@ -129,7 +129,7 @@ public sealed class PipelineTests(TestApi api) : IClassFixture<TestApi>
     [Fact]
     public async Task Keys_are_scoped_per_route()
     {
-        using var client = api.CreateClient();
+        using var client = api.ClientFor();
         var key = NewKey();
         var a = await client.SendAsync(TestApi.Post("/api/v1/test/things", new { name = "a", quantity = 1 }, key), Ct);
         var b = await client.SendAsync(TestApi.Post("/api/v1/test/fail", null, key), Ct);

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,20 @@ public sealed class EndpointConventionTests(WebApplicationFactory<Program> facto
         var offenders = ApiEndpoints()
             .Where(e => e.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()?.HttpMethods.Any(WriteMethods.Contains) == true)
             .Where(e => e.Metadata.GetMetadata<IdempotentAttribute>() is null && e.Metadata.GetMetadata<NotIdempotentMetadata>() is null)
+            .Select(e => e.RoutePattern.RawText)
+            .ToList();
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void Every_write_endpoint_names_its_authorization_policy()
+    {
+        // Writes must say who may perform them (tenant-member, tenant-admin, platform-admin …) instead of relying on
+        // the "any signed-in user" fallback — a user without a tenant must never reach tenant data by default.
+        using var client = factory.CreateClient();
+        var offenders = ApiEndpoints()
+            .Where(e => e.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()?.HttpMethods.Any(WriteMethods.Contains) == true)
+            .Where(e => !e.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(a => !string.IsNullOrEmpty(a.Policy)))
             .Select(e => e.RoutePattern.RawText)
             .ToList();
         Assert.Empty(offenders);

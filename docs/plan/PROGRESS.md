@@ -6,8 +6,8 @@
 
 | Item | Value |
 |---|---|
-| Current phase | **Phase 0 — Foundation** (in progress: T01, T03–T05 done; T02 awaiting PR) |
-| Next task | **P0-T06** Identity (P0-T02 still needs: PR run + ruleset import) |
+| Current phase | **Phase 0 — Foundation** (in progress: T01, T03–T06 done; T02 awaiting PR) |
+| Next task | **P0-T07** Tenancy core (P0-T02 still needs: PR run + ruleset import) |
 | Blockers | P0-T24 still needs the PL/SQL + table / view DDL of `WKSP_GRAYSAPP` and the BI Publisher catalog (ORDS REST export received 2026-10-01) — blocks phase 2 |
 
 ## Phase exit criteria
@@ -31,7 +31,7 @@
 | 0 | P0-T03 | Local dev stack `infra/compose`: Oracle Free 23ai, Keycloak (dev IdP), Temporal + UI, … | done | branch `claude/nifty-edison-j36zte` (PR pending): `make up` → 10 services healthy + seeded in < 1 min; `make smoke` 9 end-to-end checks; S3 = SeaweedFS (see Q9) |
 | 0 | P0-T04 | DB migrations: Liquibase project in `db/migrations` (changelog per module schema), run … | done | branch `claude/nifty-edison-j36zte` (PR pending): Liquibase 5 + ojdbc11 image; schema-only `platform` account reached by proxy; full rollback test in CI on Oracle Free; changelog checker enforces tenant_id NOT NULL |
 | 0 | P0-T05 | API skeleton (.NET 10): modular-monolith host, module registration, OpenAPI, … | done | branch `claude/nifty-edison-j36zte` (PR pending): modules + contracts, OpenAPI 3.1 at build, problem details, validation, idempotency (Redis / in-memory), rate limiting, health, OTel; `/health` trace verified in Tempo; 29 tests incl. NetArchTest |
-| 0 | P0-T06 | Identity: OIDC (Keycloak dev, Auth0 / Entra External ID prod) with organisation = … | todo | |
+| 0 | P0-T06 | Identity: OIDC (Keycloak dev, Auth0 / Entra External ID prod) with organisation = … | done | branch `claude/nifty-edison-j36zte` (PR pending): Keycloak (ADR 0010) — tenant id + roles in the token, MFA step-up, invitation-only sign-up, legacy-style login theme; API auth + `/me` + invitations; 50 tests incl. real Keycloak. Web-app sign-in itself arrives with P0-T18; profile sync to DB moves to P0-T07 (needs the data layer) |
 | 0 | P0-T07 | Tenancy core: `tenant` entity + lifecycle (create, suspend, delete); tenant context … | todo | |
 | 0 | P0-T08 | RBAC + scopes: roles per module (viewer / user / approver / admin), scopes (site, BU, … | todo | |
 | 0 | P0-T09 | Entitlements: plans, add-ons, overrides → resolved entitlements per tenant; gateway / … | todo | |
@@ -176,7 +176,7 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | PC-01 | M0 | Tenant lifecycle: sign-up, provisioning workflow, suspend, export, delete | P0-T07, P0-T16, P6-T09 | todo |
 | PC-02 | M0 | Pods: a tenant registers 1..n Fusion environments (name, base URL, … | P0-T14 | todo |
 | PC-03 | M0 | Sites / warehouses, business units, inventory orgs, currencies as tenant … | P0-T11 | todo |
-| PC-04 | M0 | Identity: OIDC organisation per tenant, SSO, MFA, SCIM (Enterprise), invitations | P0-T06 | todo |
+| PC-04 | M0 | Identity: OIDC organisation per tenant, SSO, MFA, SCIM (Enterprise), invitations | P0-T06 | in-progress — OIDC organisations, MFA step-up, invitations done (P0-T06); per-tenant SSO + SCIM later |
 | PC-05 | M0 | RBAC: roles per module (viewer / user / approver / admin) + scopes (site, BU, … | P0-T08 | todo |
 | PC-06 | M0 | Entitlements: plan + add-ons + overrides; UI hides modules not entitled; … | P0-T09 | todo |
 | PC-07 | M0 | Settings framework: typed, versioned settings per tenant / site / user with … | P0-T10 | todo |
@@ -342,7 +342,7 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | # | Question | Raised | Answer |
 |---|---|---|---|
 | 1 | Plan prices and limits for Starter / Professional / Enterprise | RD v0.1 | |
-| 2 | Production identity provider: Auth0, Entra External ID or Keycloak | RD v0.1 | |
+| 2 | Production identity provider: Auth0, Entra External ID or Keycloak | RD v0.1 | **Keycloak, self-hosted** (ADR 0010, 2026-10-02). Login keeps the legacy feel; pod / BU / org chosen right after sign-in; legacy users imported once later |
 | 3 | First production region(s): OCI Frankfurt + India / Middle East? | RD v0.1 | |
 | 4 | Pipelines engine: Dagster or Temporal-native (decided in P5-T01) | RD v0.1 | |
 | 5 | Edge agent language: .NET worker or Go | RD v0.1 | |
@@ -363,3 +363,4 @@ A requirement is **done** when all its tasks are done and its acceptance (RD) is
 | 2026-10-02 | P0-T03 done: `infra/compose` (Oracle 23ai Free, Keycloak 26 realm with organisations = tenants, Temporal dev server + UI, Redpanda + console, Redis, SeaweedFS S3, Vault dev, Grafana LGTM, Mailpit), all on 127.0.0.1, random per-machine creds in gitignored `.env`; idempotent seed (Vault transit key per tenant + least-privilege policy, S3 bucket); `make up / smoke / check / down / reset` + `pnpm stack:*`; `Dev stack` workflow + Dependabot for compose images. Raised Q9 | P0-T04; still: PR + ruleset (P0-T02), Q7–Q9 |
 | 2026-10-02 | P0-T04 done: `db/migrations` — bootstrap (as admin, idempotent) creates module schemas as Oracle 23ai schema-only accounts (no password) reachable only via `nexora_migrator[<schema>]`; `platform/changelog.yaml` with `tenant` registry (slug / status checks); `migrate.sh` update / status / rollback-test (rolls back everything, verifies, re-applies); `make db-*`, `make up` migrates; CI job on a throwaway Oracle with per-run random passwords; `@nexora/db` convention checker (rule 1: every table has `tenant_id VARCHAR2(36) NOT NULL` unless `[tenant-exempt: why]`). Compose Oracle app user renamed to `nexora_migrator` (run `make reset` once) | P0-T05; still: PR + ruleset (P0-T02), Q7–Q9 |
 | 2026-10-02 | P0-T05 done: `services/api` modular monolith — `IModule` + explicit registration, `/api/v1/<module>` groups, Platform module + Contracts; BuildingBlocks: FluentValidation filter, RFC 9457 problem details with traceId, idempotency middleware (tenant-scoped keys, replay / 422 / 409, 5xx not stored; Redis `SET NX` store or in-memory), token-bucket rate limiting with 429 problem, `/health/live` + `/health/ready` (Redis), OpenTelemetry traces / metrics / logs over OTLP; OpenAPI 3.1 generated at build into `openapi/v1.json` (CI drift check), Scalar docs at `/docs` in Development. Tests: 29 (integration via a test module, Redis store contract on Testcontainers, endpoint-convention tests, NetArchTest module boundaries — mutation-checked). `/health/ready` trace found in Tempo. Raised Q10 (MediatR licence) | P0-T06; still: PR + ruleset (P0-T02), Q7–Q10 |
+| 2026-10-02 | P0-T06 done (identity). User chose Keycloak as production IdP (ADR 0010; Q2 answered). Realm: `sub` / `acr` scopes (sub was missing since P0-T03 — fixed), audience `nexora-api`, `tenants` claim with organisation **id** = tenant_id, fixed issuer `localhost:8180`, `nexora-api` service account, brute-force lockout, password policy, SMTP → Mailpit, MFA step-up (LoA pwd / mfa, OTP enrolment on first use), invitation-only registration, `nexora` login theme (legacy fields). API: JWT validation, tenant from token + `X-Nexora-Tenant` for multi-tenant users (non-member → 403), policies tenant-member / tenant-admin / platform-admin, RFC 9470 step-up challenge, tenant + user on traces / logs, rate limits and idempotency per tenant, `GET /me`, `POST /invitations` via resilient Keycloak client. 50 tests (signed test tokens, real Keycloak on Testcontainers, convention: every write names a policy). Verified live: login page, step-up → OTP setup, invite e-mail in Mailpit, foreign tenant 403. Not yet verified: lockout. Deferred: user profile sync (P0-T07), legacy user import (needs user export), pod / BU / org picker (P0-T18) | P0-T07; still: PR + ruleset (P0-T02), Q7–Q10 |

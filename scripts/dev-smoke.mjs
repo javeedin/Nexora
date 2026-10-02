@@ -37,7 +37,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const id = randomBytes(4).toString('hex');
 
 const checks = {
-  async 'Keycloak: token carries tenant (organisation) + roles'() {
+  async 'Keycloak: token carries sub, audience, tenant id + roles'() {
     const { body } = await json('http://127.0.0.1:8180/realms/nexora/protocol/openid-connect/token', {
       method: 'POST',
       body: new URLSearchParams({
@@ -50,9 +50,11 @@ const checks = {
     });
     assert(body.access_token, `no token: ${JSON.stringify(body)}`);
     const claims = JSON.parse(Buffer.from(body.access_token.split('.')[1], 'base64url').toString());
-    assert(claims.organization?.includes('acme'), `organization claim: ${JSON.stringify(claims.organization)}`);
+    const acme = claims.tenants?.acme?.id;
+    assert(/^[0-9a-f-]{36}$/.test(acme ?? ''), `tenants claim: ${JSON.stringify(claims.tenants)}`);
+    assert(claims.sub && claims.aud === 'nexora-api', `sub / aud: ${claims.sub} / ${claims.aud}`);
     assert(claims.realm_access?.roles?.includes('tenant-admin'), 'missing tenant-admin role');
-    return `organization=${claims.organization}`;
+    return `tenant acme=${acme.slice(0, 8)}…, aud=${claims.aud}`;
   },
 
   async 'Vault: per-tenant encrypt/decrypt under nexora-api policy; key export denied'() {

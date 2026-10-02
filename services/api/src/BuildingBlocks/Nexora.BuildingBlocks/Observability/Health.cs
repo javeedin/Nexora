@@ -29,9 +29,9 @@ public static class Health
     public static IEndpointRouteBuilder MapNexoraHealth(this IEndpointRouteBuilder app)
     {
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = WriteJson })
-            .DisableRateLimiting().ExcludeFromDescription();
+            .DisableRateLimiting().ExcludeFromDescription().AllowAnonymous();
         app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains(Ready), ResponseWriter = WriteJson })
-            .DisableRateLimiting().ExcludeFromDescription();
+            .DisableRateLimiting().ExcludeFromDescription().AllowAnonymous();
         return app;
     }
 
